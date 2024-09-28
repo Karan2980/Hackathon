@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition and Caloric Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .instructions {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0 20px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .results {
+            margin-top: 20px;
+            display: none; /* Hide initially */
+        }
+        .results h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .results p {
+            font-size: 16px;
+            color: #666;
+        }
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Nutrition and Caloric Tracker</h1>
+        <p class="instructions">Enter the food items you ate today, and we'll calculate your total calories and macronutrients.</p>
+
+        <label for="foodInput">Enter food items (e.g., 1 apple, 100g chicken breast, 1 cup rice):</label>
+        <input type="text" id="foodInput" placeholder="e.g., 1 apple, 100g chicken breast, 1 cup rice">
+
+        <button id="calculateBtn">Calculate Nutrition</button>
+
+        <div class="loader" id="loader"></div>
+
+        <div class="results" id="results">
+            <h3>Nutrition Summary</h3>
+            <p id="calories"></p>
+            <p id="carbs"></p>
+            <p id="proteins"></p>
+            <p id="fats"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('calculateBtn').addEventListener('click', async function() {
+            const foodInput = document.getElementById('foodInput').value.trim();
+            const loader = document.getElementById('loader');
+            const resultsDiv = document.getElementById('results');
+            
+            // Clear previous results
+            document.getElementById('calories').innerHTML = '';
+            document.getElementById('carbs').innerHTML = '';
+            document.getElementById('proteins').innerHTML = '';
+            document.getElementById('fats').innerHTML = '';
+
+            if (!foodInput) {
+                alert("Please enter food items to calculate.");
+                return;
+            }
+
+            // Show the loader while waiting for the response
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/calculate', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ foodInput })
+});
+
+                const data = await response.json();
+
+                if (response.ok) { // Check if response status is OK
+                    loader.style.display = 'none';
+                    resultsDiv.style.display = 'block';
+
+                    // Populate the summary
+                    document.getElementById('calories').innerHTML = `Calories: ${data.nutrition.calories}`;
+                    document.getElementById('carbs').innerHTML = `Carbs: ${data.nutrition.carbs}`;
+                    document.getElementById('proteins').innerHTML = `Proteins: ${data.nutrition.proteins}`;
+                    document.getElementById('fats').innerHTML = `Fats: ${data.nutrition.fats}`;
+                } else {
+                    throw new Error(data.message || 'Failed to get nutrition data.');
+                }
+
+            } catch (error) {
+                console.error("Error fetching nutrition data:", error);
+                loader.style.display = 'none';
+                alert("Something went wrong. Please try again later.\nError details:" + error.message);
+                // Optionally log error details in console for debugging
+                console.error("Detailed error:", error);
+                resultsDiv.style.display = 'none'; // Hide results if there's an error
+             }
+         });
+     </script>
+</body>
+</html>
